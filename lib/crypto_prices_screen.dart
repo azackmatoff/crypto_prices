@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io' show Platform;
+import 'package:crypto_prices/crypto_services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -15,11 +16,13 @@ class CryptoPricesScreen extends StatefulWidget {
 class _CryptoPricesScreenState extends State<CryptoPricesScreen> {
   String dropdownValue = 'USD'; // Default selected value
 
-  List<String> items = <String>['KGS', 'YEN', 'USD', 'EUR', 'RUB', 'TRY'];
+  List<String> items = <String>['USD', 'EUR', 'RUB', 'TRY', 'CNY', 'JPY', 'CHF', 'GBP'];
 
   bool loading = true;
 
   http.Client client = http.Client();
+
+  CryptoServices cryptoServices = CryptoServices();
 
   double bitcoinPrice = 0;
   String? errorText;
@@ -77,7 +80,8 @@ class _CryptoPricesScreenState extends State<CryptoPricesScreen> {
         height: 180,
         padding: const EdgeInsets.only(bottom: 18),
         child: Center(
-          child: Platform.isIOS ? cupertinoPicker() : dropdownButton(context),
+          // child: Platform.isIOS ? cupertinoPicker() : dropdownButton(context),
+          child: dropdownButton(context),
         ),
       ),
     );
@@ -87,11 +91,13 @@ class _CryptoPricesScreenState extends State<CryptoPricesScreen> {
     return CupertinoPicker(
       backgroundColor: Theme.of(context).primaryColor,
       itemExtent: 42.0,
-      onSelectedItemChanged: (int index) {
+      onSelectedItemChanged: (int index) async {
         setState(() {
+          loading = true;
           dropdownValue = items[index];
         });
-        log('onSelectedItemChanged ${items[index]}');
+
+        await getCryptoPrices(items[index]);
       },
       children: items.map((String value) {
         return Center(
@@ -121,11 +127,12 @@ class _CryptoPricesScreenState extends State<CryptoPricesScreen> {
           height: 2,
           color: Colors.white,
         ),
-        onChanged: (String? value) {
-          log('onChanged $value');
+        onChanged: (String? value) async {
           setState(() {
+            loading = true;
             dropdownValue = value!;
           });
+          await getCryptoPrices(value!);
         },
         dropdownColor: Theme.of(context).primaryColor,
         items: items.map<DropdownMenuItem<String>>((String value) {
@@ -138,40 +145,13 @@ class _CryptoPricesScreenState extends State<CryptoPricesScreen> {
     );
   }
 
-  final String baseUrl = 'https://rest.coinapi.io';
-  final String apiKey = '9dd18800-7770-4f70-9472-1c153449932b';
-
   Future<void> getCryptoPrices(String currency) async {
-    Uri uri = Uri.parse('$baseUrl/v1/exchangerate/BTC/$currency?apikey=$apiKey');
+    final btcPrice = await cryptoServices.getCryptoPrices(currency);
 
-    http.Response response = await client.get(uri);
-
-    log('response.statusCode ${response.statusCode}');
-    if (response.statusCode == 200) {
-      log('response.body ${response.body.runtimeType}');
-
-      Map<String, dynamic> data = jsonDecode(response.body);
-
-      log('data.runtimeType ${data.runtimeType}');
-      log('data.rate ${data['rate']}');
-
-      setState(() {
-        bitcoinPrice = data['rate'];
-        loading = false;
-      });
-    } else {
-      log('Something went wrong!');
-
-      setState(() {
-        errorText = 'Something went wrong!';
-
-        loading = false;
-      });
-    }
-
-    // setState(() {
-    //   loading = false;
-    // });
+    setState(() {
+      bitcoinPrice = btcPrice;
+      loading = false;
+    });
   }
 
   void changeDropdownValue() {
