@@ -2,11 +2,11 @@ import 'dart:io' show Platform;
 
 import 'package:crypto_prices/core/utils/date_time_utils.dart';
 import 'package:crypto_prices/data/home/repository/home_repository_impl.dart';
-import 'package:crypto_prices/presentation/home/biz_logic/home_view_biz_logic.dart';
+import 'package:crypto_prices/presentation/home/flutter_way/biz_logic/home_view_biz_logic.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class HomeView extends StatefulWidget {
+final class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
   @override
@@ -30,7 +30,7 @@ class _HomeViewState extends State<HomeView> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
-          'Crypto Prices',
+          'FLUTTER-WAY: Crypto Prices',
           style: TextStyle(
             color: Colors.white,
           ),
